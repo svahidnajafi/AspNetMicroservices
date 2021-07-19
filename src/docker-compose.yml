@@ -6,6 +6,12 @@ services:
     
   basketdb:
     image: redis:alpine
+    
+  discountdb:
+    image: postgres
+    
+  pgadmin:
+    image: dpage/pgadmin4
 
   catalogdb.client:
     image: mongoclient/mongoclient
@@ -21,10 +27,28 @@ services:
     build:
       context: .
       dockerfile: Services/Basket/Basket.API/Dockerfile
+      
+  discount.api:
+    image: ${DOCKER_REGISTRY-}discountapi
+    build:
+      context: .
+      dockerfile: Services/Discount/Discount.API/Dockerfile
+      
+  discount.grpc:
+    image: ${DOCKER_REGISTRY-}discountgrpc
+    build:
+      context: .
+      dockerfile: Services/Discount/Discount.Grpc/Dockerfile
+      
+  portainer:
+    image: portainer/portainer-ce
 
 volumes:
   mongo_data:
   mongo_client:
+  postgres_data:
+  pgadmin_data:
+  portainer_data:
 
 
 

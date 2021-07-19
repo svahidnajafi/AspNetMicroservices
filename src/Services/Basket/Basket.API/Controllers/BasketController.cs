@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;
 using System.Threading.Tasks;
+using AutoMapper;
+using Basket.API.GrpcServices;
 
 namespace Basket.API.Controllers
 {
@@ -12,10 +14,14 @@ namespace Basket.API.Controllers
     public class BasketController : ControllerBase
     {
         private readonly IBasketRepository _repository;
+        private readonly DiscountGrpcService _discountGrpcService;
+        private readonly IMapper _mapper;
 
-        public BasketController(IBasketRepository repository)
+        public BasketController(IBasketRepository repository, DiscountGrpcService discountGrpcService, IMapper mapper)
         {
             _repository = repository;
+            _discountGrpcService = discountGrpcService;
+            _mapper = mapper;
         }
 
         [HttpGet("{userName}", Name = "GetBasket")]
@@ -30,6 +36,13 @@ namespace Basket.API.Controllers
         [ProducesResponseType(typeof(ShoppingCart), (int)HttpStatusCode.OK)]
         public async Task<ActionResult<ShoppingCart>> UpdateBasket([FromBody] ShoppingCart basket)
         {
+            // consume Discount Grpc
+            foreach (var item in basket.Items)
+            {
+                var coupon = await _discountGrpcService.GetDiscount(item.ProductName);
+                item.Price -= coupon.Amount;
+            }
+            
             return Ok(await _repository.UpdateBasket(basket));
         }
 
